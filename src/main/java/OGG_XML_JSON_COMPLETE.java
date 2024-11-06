@@ -35,18 +35,32 @@ public class OGG_XML_JSON_COMPLETE {
                         // If element is JSONObject
                         JSONObject nestedObject = (JSONObject) element;
                         int mValue = nestedObject.optInt("m", -1); // get value m
+                        String cValue = nestedObject.optString("c", ""); // get value c
                         String contentValue = nestedObject.optString("content", ""); // get value content
 
-                        // If mValue is valid and contentValue not Empty
-                        if (mValue != -1 && !contentValue.isEmpty()) {
-                            transformedJson.put("m" + mValue, contentValue); // add key-value to new object
+                        // Determine the key format
+                        String newKey;
+                        if (mValue != -1 && !cValue.isEmpty()) {
+                            // If both m and c are present, use mX_cY format
+                            newKey = "m" + mValue + "_c" + cValue;
+                        } else if (mValue != -1) {
+                            // If only m is present, use mX format
+                            newKey = "m" + mValue;
+                        } else {
+                            // If neither m nor c is present, skip this entry
+                            return;
                         }
+
+                        // Add only the determined key-value pair to transformedJson
+                        transformedJson.put(newKey, contentValue.isEmpty() ? nestedObject.toString() : contentValue);
+
                     } else {
+                        // Add regular non-JSONObject array elements as m1, m2, etc.
                         transformedJson.put("m" + (transformedJson.length() + 1), element);
                     }
                 });
                 resultJson.put(key, transformedJson);
-            }  else {
+            } else {
                 resultJson.put(key, String.valueOf(value));
             }
         });
@@ -86,9 +100,10 @@ public class OGG_XML_JSON_COMPLETE {
                 "</row>";
 
         OGG_XML_JSON_COMPLETE myObj = new OGG_XML_JSON_COMPLETE();
+        JSONObject result = myObj.parseXMLStringJsonV2(xmlData);
         long endTime = System.nanoTime();
         double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
         System.out.println("Total execution time: " + durationInSeconds + " seconds");
-        System.out.println("result:" + myObj.parseXMLStringJsonV2(xmlData));
+        System.out.println("result:" + result);
     }
 }
